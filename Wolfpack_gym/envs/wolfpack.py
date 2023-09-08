@@ -27,6 +27,7 @@ class Generator(object):
         self.birthLimit = birthLimit
         self.copy = None
 
+
     def initialiseMap(self):
         for x in range(self.x_size):
             for y in range(self.y_size):
@@ -134,13 +135,14 @@ class Wolfpack(gym.Env):
                  sight_sideways=8, sight_radius=8, max_time_steps=200,
                  coop_radius=1, groupMultiplier=2, food_freeze_rate=0, seed=None,
                  obs_type="vector", with_random_grid=False, random_grid_dir=None,
-                 prey_with_gpu=False):
+                 prey_with_gpu=False, close_penalty=0.5, sparse = True):
 
         # Define width and height of grid world
             self.grid_height = grid_height
             self.grid_width = grid_width
             self.obs_type = obs_type
-
+            self.close_penalty = close_penalty
+            self.sparse = sparse
             N_DISCRETE_ACTIONS = 5
             self.action_space = spaces.Tuple([spaces.Discrete(N_DISCRETE_ACTIONS) for _ in range(num_players)])
 
@@ -471,6 +473,7 @@ class Wolfpack(gym.Env):
                 return (x, y, new_orientation)
             # rotate right
             else:
+                # just for prey, they can do 2 more actions
                 new_orientation = 0
                 if orientation == 0:
                     new_orientation = 1
@@ -495,36 +498,40 @@ class Wolfpack(gym.Env):
 
             cur_dist_to_food = [min([abs(px - fx) + abs(py - fy) for (fx, fy) in food_locations])
                                       for (px, py) in self.player_positions]
-
-            self.player_points = [0.01 * (prev_dist-cur_dist)
-                                  for prev_dist, cur_dist in zip(self.prev_dist_to_food, cur_dist_to_food)]
+            if self.sparse:
+                self.player_points = [0 for _ in range(self.num_players)]
+            else:
+                self.player_points = [0.01 * (prev_dist-cur_dist)
+                                      for prev_dist, cur_dist in zip(self.prev_dist_to_food, cur_dist_to_food)]
             self.prev_dist_to_food = cur_dist_to_food
-
             self.food_points = [0 for _ in range(self.max_food_num)]
             player_id_counter = 0
             for player_loc in player_locations:
                 player_vicinities = [((player_loc[0]+a[0]),(player_loc[1]+a[1])) for a in [(0,1),(0,-1),(1,0),(-1,0)]]
                 for player_vic in player_vicinities:
                     if player_vic in set_of_food_location:
-                        center = player_vic
+                        center = player_vic # center and player_vic are food locations
                         enumerated = enumerate(player_locations)
                         close = [x for (x, (a, b)) in enumerated if abs(a - center[0]) + abs(b - center[1])
-                                 <= self.coopRadius]
+                                 <= self.coopRadius] # this calculates closeness of players next to food location
                         if len(close) > 1:
-
+                            print('Prey is captured')
                             self.player_points[player_id_counter] += self.groupMultiplier * len(close)
                             food_index = food_locations.index(center)
                             self.food_points[food_id[food_index]] += -1
                             self.food_alive_statuses[food_id[food_index]] = False
                             self.food_frozen_time[food_id[food_index]] = self.food_freeze_rate
-                            
-                            self.grid[center[0]][center[1]] = 1
+
+                            self.grid[center[0]][center[1]] = 1 # this removes the food
                             if "full_rgb" in self.obs_type:
                                 self.RGB_grid[center[0]][center[1]] = [0, 0, 0]
                             self.RGB_padded_grid[center[0] + self.pads][center[1] + self.pads] \
                                 = [0, 0, 0]
-
+                        else:
+                            self.player_points[player_id_counter] -= self.close_penalty
+                print(self.food_alive_statuses)
                 player_id_counter += 1
+
 
             for idx, food in enumerate(self.food_positions):
                 if self.food_alive_statuses[idx]:
@@ -795,9 +802,9 @@ class Visualizer(object):
 
 if __name__=='__main__':
     import time
-    env = Wolfpack(8,8,2,3)
+    env = Wolfpack(8,8,3,2,obs_type='grid')
     obs = env.reset()
-    for i in range(20):
+    for i in range(2000):
         act = env.action_space.sample()
         env.step(act)
         # time.sleep(0.5)
