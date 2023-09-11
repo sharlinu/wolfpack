@@ -515,7 +515,6 @@ class Wolfpack(gym.Env):
                         close = [x for (x, (a, b)) in enumerated if abs(a - center[0]) + abs(b - center[1])
                                  <= self.coopRadius] # this calculates closeness of players next to food location
                         if len(close) > 1:
-                            print('Prey is captured')
                             self.player_points[player_id_counter] += self.groupMultiplier * len(close)
                             food_index = food_locations.index(center)
                             self.food_points[food_id[food_index]] += -1
@@ -529,7 +528,6 @@ class Wolfpack(gym.Env):
                                 = [0, 0, 0]
                         else:
                             self.player_points[player_id_counter] -= self.close_penalty
-                print(self.food_alive_statuses)
                 player_id_counter += 1
 
 
