@@ -135,7 +135,7 @@ class Wolfpack(gym.Env):
                  sight_sideways=8, sight_radius=8, max_time_steps=200,
                  coop_radius=1, groupMultiplier=2, food_freeze_rate=0, seed=None,
                  obs_type="vector", with_random_grid=False, random_grid_dir=None,
-                 prey_with_gpu=False, close_penalty=0.5, sparse = True):
+                 prey_with_gpu=False, close_penalty=0.0, sparse = True):
 
         # Define width and height of grid world
             self.grid_height = grid_height
@@ -362,6 +362,7 @@ class Wolfpack(gym.Env):
                 for idx in revived_idxes:
                     self.food_alive_statuses[idx] = True
                     self.food_positions[idx] = coords[coord_idx]
+                    self.grid[self.food_positions[idx][0]][self.food_positions[idx][1]] = 3
                     coord_idx += 1
 
             self.prev_dist_to_food = [min([abs(px - fx) + abs(py - fy) for (fx, fy) in self.food_positions])
@@ -544,7 +545,7 @@ class Wolfpack(gym.Env):
             self.other_player_acts = hunter_collective_action
             self.remaining_timesteps -= 1
             self.update_status()
-            self.revive()
+            # self.revive()
 
             prev_player_position = self.player_positions
             prev_player_orientation = self.player_orientation
@@ -618,7 +619,7 @@ class Wolfpack(gym.Env):
                 doubles = [t for t in groupings if len(t) > 1]
 
             for a in self.food_positions:
-                self.grid[a[0]][a[1]] = 1
+                self.grid[a[0]][a[1]] = 1 # removes food
                 if "full_rgb" in self.obs_type:
                     self.RGB_grid[a[0]][a[1]] = [0, 0, 0]
                 self.RGB_padded_grid[a[0] + self.pads][a[1] + self.pads] = [0, 0, 0]
@@ -645,6 +646,7 @@ class Wolfpack(gym.Env):
                 self.RGB_padded_grid[a[0] + self.pads][a[1] + self.pads] = [255, 255, 255]
 
             self.update_food_status()
+            self.revive()
 
     def observation_computation(self, obs_type, agent_type="player", agent_id=0):
             if obs_type == "vector":
@@ -800,10 +802,14 @@ class Visualizer(object):
 
 if __name__=='__main__':
     import time
-    env = Wolfpack(8,8,3,2,obs_type='grid')
+    env = Wolfpack(5,5,4,2,obs_type='grid')
     obs = env.reset()
-    for i in range(2000):
+    for i in range(100000):
         act = env.action_space.sample()
-        env.step(act)
+        obs, rew, dones, info = env.step(act)
+        print(obs)
+        print(rew)
+        print(dones)
+        print(info)
         # time.sleep(0.5)
         env.render()
