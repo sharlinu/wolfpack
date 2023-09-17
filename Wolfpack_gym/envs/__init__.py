@@ -1,1 +1,1 @@
-from wolfpack.Wolfpack_gym.envs.wolfpack import Wolfpack
+from Wolfpack_gym.envs.wolfpack import Wolfpack

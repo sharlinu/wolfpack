@@ -1,6 +1,21 @@
 from gym.envs.registration import register
 
 register(
+    id='wolfpack-sparse',
+    entry_point='Wolfpack_gym.envs:Wolfpack',
+    kwargs={'grid_height': 10,
+            'grid_width': 10,
+            'num_players': 3,
+            'max_food_num': 2,
+            'sparse': True,
+            'close_penalty': 0.0,
+            'obs_type': 'grid',
+            # 'seed':4001,
+            }
+)
+
+
+register(
     id='wolfpack-v0',
     entry_point='Wolfpack_gym.envs:Wolfpack',
     kwargs={'grid_height': 10, 'grid_width' : 10, 'num_players':5, 'seed':100}
