@@ -22,7 +22,7 @@ class Generator(object):
         self.x_size = size[0]
         self.y_size = size[1]
         self.booleanMap = [[False] * k for k in [self.x_size] * self.y_size]
-        self.probStartAlive = 0.82;
+        self.probStartAlive = 0.82
         self.deathLimit = deathLimit
         self.birthLimit = birthLimit
         self.copy = None
@@ -138,6 +138,8 @@ class Wolfpack(gym.Env):
                  prey_with_gpu=False, close_penalty=0.0, sparse = True):
 
         # Define width and height of grid world
+            self.n_agents = num_players
+            self.n_objects = max_food_num
             self.grid_height = grid_height
             self.grid_width = grid_width
             self.obs_type = obs_type
