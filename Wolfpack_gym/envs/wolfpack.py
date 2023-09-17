@@ -135,7 +135,7 @@ class Wolfpack(gym.Env):
                  sight_sideways=8, sight_radius=8, max_time_steps=200,
                  coop_radius=1, groupMultiplier=2, food_freeze_rate=0, seed=None,
                  obs_type="vector", with_random_grid=False, random_grid_dir=None,
-                 prey_with_gpu=False, close_penalty=0.5, sparse = True):
+                 prey_with_gpu=False, close_penalty=0.0, sparse=False):
 
         # Define width and height of grid world
             self.grid_height = grid_height
@@ -143,6 +143,7 @@ class Wolfpack(gym.Env):
             self.obs_type = obs_type
             self.close_penalty = close_penalty
             self.sparse = sparse
+            self.n_agents = num_players
             N_DISCRETE_ACTIONS = 5
             self.action_space = spaces.Tuple([spaces.Discrete(N_DISCRETE_ACTIONS) for _ in range(num_players)])
 
@@ -170,15 +171,16 @@ class Wolfpack(gym.Env):
                 self.observation_space = spaces.Tuple([spaces.Dict({'image': sa_observation_space}) for _ in range(num_players)])
 
             # Define seeds for the agent initial position generator
-            if seed is None:
-                seed = int(time.time())
-            self.seed=seed
+            # if seed is None:
+            #     seed = int(time.time())
+            # self.seed=seed
             #self.randomizer = random
-            np.random.seed(self.seed)
+            # np.random.seed(self.seed)
 
 
 
-            # Define the observation space of the preys
+
+    # Define the observation space of the preys
             self.sight_sideways = sight_sideways
             self.sight_radius = sight_radius
             self.pads = max(self.sight_sideways, self.sight_radius)
@@ -254,6 +256,10 @@ class Wolfpack(gym.Env):
             self.sight_radius = sight_radius
             self.coopRadius = coop_radius
             self.groupMultiplier = groupMultiplier
+
+    # def seed(self, seed=None):
+    #     self.np_random, seed = seeding.np_random(seed)
+    #     return [seed]
 
     def save_map(self, filename):
             with open(filename, 'wb') as f:
@@ -718,9 +724,10 @@ class Wolfpack(gym.Env):
             self.update_state(hunter_collective_action, food_collective_action)
             player_returns = (tuple([self.observation_computation(obs_type, agent_id=id)
                               for id, obs_type in enumerate(self.player_obs_type)]),
-                              self.player_points, [self.remaining_timesteps == 0 for
-                              a in range(len(self.player_points))], [{} for _ in
-                              range(len(self.player_points))])
+                              self.player_points,
+                              [self.remaining_timesteps == 0 for _ in range(len(self.player_points))],
+                              {}
+                              )
 
             food_returns = ([self.observation_computation(obs_type, agent_type="food", agent_id=id)
                              for id, obs_type in enumerate(self.food_obs_type)],
