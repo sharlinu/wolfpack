@@ -163,7 +163,12 @@ class Wolfpack(gym.Env):
 
                 box_low = [0] * len(box_high)
                 self.observation_space = spaces.Tuple([spaces.Box(low=np.array(box_low), high=np.array(box_high),
-                                                    dtype=np.int32) for _ in range(num_players)])
+                                                    dtype=np.int64) for _ in range(num_players)])
+
+            elif obs_type =='dense_vector':
+                n_objects = num_players + max_food_num
+                self.observation_space = spaces.Tuple([spaces.Box(low=0, high=max(self.grid_width,self.grid_height), shape=(n_objects*2,))
+                                                       for _ in range(num_players)])
 
             elif obs_type == "grid":
                 sa_observation_space = spaces.Box(low=np.zeros((self.grid_height, self.grid_width, 3)),
@@ -665,6 +670,19 @@ class Wolfpack(gym.Env):
 
                 return np.asarray(observations)
 
+            elif obs_type == "dense_vector":
+                observations = []
+                player_locs = [self.player_positions[agent_id][0], self.player_positions[agent_id][1]]
+                other_player_locs = self.player_positions.copy()
+                other_player_locs.pop(agent_id)
+                other_player_locs = [x for a in other_player_locs for x in list(a)]
+                food_locs = [x for a in self.food_positions for x in list(a)]
+                observations.extend(player_locs)
+                observations.extend(other_player_locs)
+                observations.extend(food_locs)
+
+                return np.asarray(observations)
+
             elif obs_type == 'grid':
                 res = np.zeros((self.grid_height, self.grid_width, 3), dtype=int)
                 for i in range(self.grid_height):
@@ -723,8 +741,7 @@ class Wolfpack(gym.Env):
             player_returns = (tuple([self.observation_computation(obs_type, agent_id=id)
                               for id, obs_type in enumerate(self.player_obs_type)]),
                               self.player_points, [self.remaining_timesteps == 0 for
-                              a in range(len(self.player_points))], [{} for _ in
-                              range(len(self.player_points))])
+                              a in range(len(self.player_points))], {})
 
             food_returns = ([self.observation_computation(obs_type, agent_type="food", agent_id=id)
                              for id, obs_type in enumerate(self.food_obs_type)],
@@ -804,7 +821,9 @@ class Visualizer(object):
 
 if __name__=='__main__':
     import time
-    env = Wolfpack(5,5,4,2,obs_type='grid')
+    import gym
+    env = gym.make('wolfpack-v0')
+    # env = Wolfpack(5,5,2,1,obs_type='dense_vector')
     obs = env.reset()
     for i in range(100000):
         act = env.action_space.sample()
