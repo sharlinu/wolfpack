@@ -1,4 +1,9 @@
 from gym.envs.registration import register
+register(
+    id ='wolfpack-sparse-densevector',
+    entry_point = 'Wolfpack_gym.envs:Wolfpack',
+    kwargs = {'grid_height':10, 'grid_width': 10, 'num_players':3, 'sparse':True, 'obs_type' : 'dense_vector'}
+    )
 
 register(
     id='wolfpack-v0',

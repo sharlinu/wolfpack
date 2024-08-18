@@ -144,7 +144,7 @@ class Wolfpack(gym.Env):
             self.grid_width = grid_width
             self.obs_type = obs_type
             self.close_penalty = close_penalty
-            self.sparse = sparse
+            self.sparse = sparse # OUR ADDITION: if sparse, no distance-based rewards are given
             N_DISCRETE_ACTIONS = 5
             self.action_space = spaces.Tuple([spaces.Discrete(N_DISCRETE_ACTIONS) for _ in range(num_players)])
 
@@ -177,11 +177,11 @@ class Wolfpack(gym.Env):
                 self.observation_space = spaces.Tuple([spaces.Dict({'image': sa_observation_space}) for _ in range(num_players)])
 
             # Define seeds for the agent initial position generator
-            if seed is None:
-                seed = int(time.time())
-            self.seed=seed
+            # if seed is None:
+            #    seed = int(time.time())
+            #self.seed=seed
             #self.randomizer = random
-            np.random.seed(self.seed)
+            #np.random.seed(self.seed)
 
 
 
@@ -507,6 +507,7 @@ class Wolfpack(gym.Env):
             cur_dist_to_food = [min([abs(px - fx) + abs(py - fy) for (fx, fy) in food_locations])
                                       for (px, py) in self.player_positions]
             if self.sparse:
+            # this is addition: no step reward based on distance to target
                 self.player_points = [0 for _ in range(self.num_players)]
             else:
                 self.player_points = [0.01 * (prev_dist-cur_dist)
